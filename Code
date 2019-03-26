@@ -1,0 +1,42 @@
+def crimeData(coOrdinates1, coOrdinates2, coOrdinates3, month, year):
+  import requests
+  import json
+  boundariesCoOrd = [coOrdinates1,coOrdinates2, coOrdinates3]
+  #Setting the Boundaries of the Search Area#
+  
+  boundaries = []
+  
+  for v in range (1,7):
+    for x in range (0,3):
+      JSONContent = requests.get("https://data.police.uk/api/crimes-at-location?date=" + str(year) + "-" + str(v) + "&lat=" + str(boundariesCoOrd[x][0]) + "&lng=" + str(boundariesCoOrd[x][1])).json()
+      if len(JSONContent) != 0 and JSONContent[0]["location"]["street"]["id"] not in boundaries:
+        boundaries.append(JSONContent[0]["location"]["street"]["id"])
+  #Making a Get Request From the Government Crime API For the locations IDs of these Boundary Co-Ordinates
+  # If a crime hasn't Occurred in the first six months of the year you are searching for then consider tweaking the get request as no data will be returned to gather the location IDs from
+
+
+  boundaries =sorted(boundaries)
+  print(boundaries)
+  #The three boundary IDs are ordered to find the smallest and largest values
+
+  typesOfCrime= {}
+  # Setting up an empty dictionary to store the category of crimes occuring in the data set
+  
+  for a in range (boundaries[0],boundaries[2] + 1):
+    try:
+      JSONContent = requests.get(url = "https://data.police.uk/api/crimes-at-location?date=" + str(year) + "-" + str(month) + "&location_id=" + str(a)).json()
+      #Making a requst for all data within the given month and each of the IDs within the given boundaries
+      
+      if len(JSONContent) != 0:
+        for b in range (len(JSONContent)):
+          category = JSONContent[b]["category"]
+          if category in typesOfCrime:
+            typesOfCrime[category] = typesOfCrime[category] + 1
+          else:
+            typesOfCrime[category] = 1
+            # Respectively incrementing the counter for a particular category or creating a new category if its the first time the program has seen a particular type of crime
+    except:
+      continue
+      # If a partiuclar point has been removed from the database accessing it's page will return an error. This just serves as a catch.
+
+  return typesOfCrime
